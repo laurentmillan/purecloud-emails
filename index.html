@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>PureCloud email manager</title>
+    <script src="https://unpkg.com/vue"></script>
+    <!--script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script-->
+    <script
+  src="https://code.jquery.com/jquery-3.2.1.min.js"
+  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+  crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js" integrity="sha384-h0AbiXch4ZDo7tp9hKZ4TsHbi047NrKGLO3SEJAg45jXxnGIfYzk4Si90RDIqNm1" crossorigin="anonymous"></script>
+    <script src="https://sdk-cdn.mypurecloud.com/javascript/10.0.0/purecloud-platform-client-v2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment-with-locales.min.js"></script>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
+    <link rel="stylesheet" href="css/style.css">
+  </head>
+  <body>
+
+    <div id="app" class="container">
+      <!-- Choix de la file d'attente -->
+      <div class="row" style="margin-top:20px;">
+        <div class="dropdown">
+          <button class="btn btn-primary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <span v-if="selectedQueue == null">Choisir la file d'attente</span>
+            <span v-else>{{selectedQueue.name}}</span>
+          </button>
+          <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+            <a v-for="queue in myQueues" class="dropdown-item" @click="selectQueue(queue)">{{queue.name}}</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="row" v-if="selectedConversation" style="margin-top:20px;">
+        <h3>Intéraction selectionnée <small>[Démarré {{getTimeFromNow(getSegmentStart(selectedConversation))}}]</small></h3>
+          <div class="card" style="width:100%">
+            <div class="card-header">
+              <h4>
+                {{getSegmentDetails(selectedConversation).subject}}
+              </h4>
+              <span>
+                De: {{getExternalParticipant(selectedConversation).participantName}} &lt;{{getSessionDetails(selectedConversation).addressSelf}}&gt;<br>
+                A: {{getSessionDetails(selectedConversation).addressOther}}
+              </span>
+            <div class="dropdown" style="position: absolute; top: 20px; right: 20px;">
+              <button class="btn btn-warning btn-sm dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                Transférer
+              </button>
+              <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                <a v-for="queue in myQueues" class="dropdown-item" @click="transferToQueue(queue)">{{queue.name}}</a>
+              </div>
+            </div>
+
+            </div>
+            <div class="card-body" v-for="(msg, index) in conversationMessages" style="border-top: 1px solid rgba(0,0,0,.125); padding: 0.6rem; cursor: pointer;">
+              <div class="card-text" @click="selectMessage(msg)">
+                <span v-if="msg.id != selectedMessageId" >
+                  {{getSessionDetails(selectedConversation).direction}} - {{getTimeFromNow(msg.time)}}
+                </span>
+                <span v-else class="badge badge-info">
+                  {{getSessionDetails(selectedConversation).direction}} - {{getTimeFromNow(msg.time)}}
+                </span>
+                <p v-html="msg.htmlBody" v-if="msg.id == selectedMessageId" style="margin-top: 8px;"></p>
+              </div>
+            </div>
+          </div>
+      </div>
+
+      <!-- Choix de la file d'attente -->
+      <div class="row" v-if="selectedQueue" style="margin-top: 40px;">
+        <h3>Liste des interactions pour la file {{selectedQueue.name}}</h3>
+        <table class="table table-striped table-hover">
+          <thead class="thead-inverse">
+            <tr>
+              <th>Début</th>
+              <th>Client</th>
+              <th>Sujet</th>
+              <th>@ Source</th>
+              <th>@ Dest.</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="conv in this.conversations" @click="selectConversation(conv)" style="cursor: pointer;" :class="{'table-info': isConversationSelected(conv)}">
+              <td>{{getTimeFromNow(getSegmentStart(conv), false)}}</td>
+              <td>{{getExternalParticipant(conv).participantName}}</td>
+              <td>{{getSegmentDetails(conv).subject}}</td>
+              <td>{{getSessionDetails(conv).addressSelf}}</td>
+              <td>{{getSessionDetails(conv).addressOther}}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <script src="js/index.js"></script>
+  </body>
+</html>
